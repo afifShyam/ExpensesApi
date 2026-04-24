@@ -1,0 +1,47 @@
+using System.Text.Json;
+using ExpenseApi.Common;
+
+namespace ExpenseApi.Middleware;
+
+public class GlobalExceptionMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionMiddleware> _logger;
+
+    public GlobalExceptionMiddleware(
+        RequestDelegate next,
+        ILogger<GlobalExceptionMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception exception)
+        {
+            var traceId = context.TraceIdentifier;
+
+            _logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", traceId);
+
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+
+            var response = new ApiErrorResponse
+            {
+                Message = "Something went wrong.",
+                Error = new ApiError
+                {
+                    Code = "SERVER_ERROR",
+                    TraceId = traceId
+                }
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        }
+    }
+}
