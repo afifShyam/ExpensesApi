@@ -41,13 +41,29 @@ public class ExpenseService(IExpenseRepository expenseRepository) : IExpenseServ
             );
         }
 
+        if (dto.CategoryId <= 0)
+        {
+            return Result<ExpenseResponseDto>.Failure(
+                new Error("Expense.InvalidCategory", "CategoryId is required.")
+            );
+        }
+
+        var categoryExists = await _expenseRepository.CategoryExistsAsync(dto.CategoryId);
+
+        if (!categoryExists)
+        {
+            return Result<ExpenseResponseDto>.Failure(
+                new Error("Category.NotFound", "Category was not found.")
+            );
+        }
+
         var expense = new Expense
         {
             Title = dto.Title.Trim(),
-            Description = dto.Description?.Trim(),
             Amount = dto.Amount,
             Date = DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc),
-            Category = dto.Category.Trim()
+            CategoryId = dto.CategoryId,
+            Note = dto.Note?.Trim()
         };
 
         var createdExpense = await _expenseRepository.CreateAsync(expense);
@@ -64,13 +80,29 @@ public class ExpenseService(IExpenseRepository expenseRepository) : IExpenseServ
             );
         }
 
+        if (dto.CategoryId <= 0)
+        {
+            return Result<ExpenseResponseDto>.Failure(
+                new Error("Expense.InvalidCategory", "CategoryId is required.")
+            );
+        }
+
+        var categoryExists = await _expenseRepository.CategoryExistsAsync(dto.CategoryId);
+
+        if (!categoryExists)
+        {
+            return Result<ExpenseResponseDto>.Failure(
+                new Error("Category.NotFound", "Category was not found.")
+);
+        }
+
         var expense = new Expense
         {
             Title = dto.Title.Trim(),
-            Description = dto.Description?.Trim(),
             Amount = dto.Amount,
             Date = DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc),
-            Category = dto.Category.Trim()
+            CategoryId = dto.CategoryId,
+            Note = dto.Note?.Trim()
         };
 
         var updatedExpense = await _expenseRepository.UpdateAsync(id, expense);
@@ -104,11 +136,12 @@ public class ExpenseService(IExpenseRepository expenseRepository) : IExpenseServ
         return new ExpenseResponseDto
         {
             Id = expense.Id,
+            CategoryId = expense.CategoryId,
+            CategoryName = expense.Category?.Name,
             Title = expense.Title,
-            Description = expense.Description,
             Amount = expense.Amount,
             Date = expense.Date,
-            Category = expense.Category,
+            Note = expense.Note,
             CreatedAt = expense.CreatedAt,
             UpdatedAt = expense.UpdatedAt
         };

@@ -34,6 +34,12 @@ public class ExpenseRepository(ExpenseDbContext context) : IExpenseRepository
         return expense;
     }
 
+    public Task<bool> CategoryExistsAsync(int categoryId)
+    {
+        return _context.Categories
+            .AnyAsync(c => c.Id == categoryId);
+    }
+
     public async Task<Expense?> UpdateAsync(int id, Expense expense)
     {
         var existingExpense = await _context.Expenses.FindAsync(id);
@@ -42,7 +48,6 @@ public class ExpenseRepository(ExpenseDbContext context) : IExpenseRepository
             return null;
 
         existingExpense.Title = expense.Title;
-        existingExpense.Description = expense.Description;
         existingExpense.Amount = expense.Amount;
         existingExpense.Date = expense.Date;
         existingExpense.Category = expense.Category;

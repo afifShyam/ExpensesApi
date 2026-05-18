@@ -16,7 +16,11 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
     {
         var result = await _expenseService.GetAllAsync();
 
-        return Success(result.Value!, "Expenses fetched successfully.");
+
+        return result.When<IActionResult>(
+            success: value => Success(value, "Expenses fetched successfully."),
+            failure: error => Failure(error)
+        );
     }
 
     [HttpGet("{id:int}")]
@@ -24,10 +28,10 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
     {
         var result = await _expenseService.GetByIdAsync(id);
 
-        if (result.IsFailure)
-            return Failure(result.Error!);
-
-        return Success(result.Value!, "Expense fetched successfully.");
+        return result.When<IActionResult>(
+            success: value => Success(value, "Expense fetched successfully."),
+            failure: Failure
+        );
     }
 
     [HttpPost]
@@ -35,14 +39,14 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
     {
         var result = await _expenseService.CreateAsync(dto);
 
-        if (result.IsFailure)
-            return Failure(result.Error!);
-
-        return CreatedSuccess(
+        return result.When<IActionResult>(
+            success: value => CreatedSuccess(
             nameof(GetById),
-            new { id = result.Value!.Id },
-            result.Value,
+            new { id = value!.Id },
+            value,
             "Expense created successfully."
+        ),
+            failure: Failure
         );
     }
 
@@ -51,10 +55,10 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
     {
         var result = await _expenseService.UpdateAsync(id, dto);
 
-        if (result.IsFailure)
-            return Failure(result.Error!);
-
-        return Success(result.Value!, "Expense updated successfully.");
+        return result.When<IActionResult>(
+            success: value => Success(value, "Expense updated successfully."),
+            failure: Failure
+        );
     }
 
     [HttpDelete("{id:int}")]
@@ -62,9 +66,9 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
     {
         var result = await _expenseService.DeleteAsync(id);
 
-        if (result.IsFailure)
-            return Failure(result.Error!);
-
-        return Success(new { id }, "Expense deleted successfully.");
+        return result.When<IActionResult>(
+            success: value => Success(value, "Expense deleted successfully."),
+            failure: Failure
+        );
     }
 }

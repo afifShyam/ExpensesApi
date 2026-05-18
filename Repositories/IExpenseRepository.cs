@@ -10,4 +10,6 @@ public interface IExpenseRepository
     Task<Expense?> UpdateAsync(int id, Expense expense);
     Task<bool> DeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
+
+    Task<bool> CategoryExistsAsync(int categoryId);
 }

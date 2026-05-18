@@ -48,8 +48,14 @@ public abstract class ApiControllerBase : ControllerBase
         return error.Code switch
         {
             "Expense.NotFound" => NotFound(response),
+            "Category.NotFound" => NotFound(response),
+
+            "Expense.InvalidAmount" => BadRequest(response),
+            "Expense.InvalidCategory" => BadRequest(response),
             "VALIDATION_ERROR" => BadRequest(response),
+
             "AUTH_EXPIRED" => Unauthorized(response),
+
             _ => BadRequest(response)
         };
     }

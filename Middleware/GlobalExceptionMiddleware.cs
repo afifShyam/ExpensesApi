@@ -3,30 +3,21 @@ using ExpenseApi.Common;
 
 namespace ExpenseApi.Middleware;
 
-public class GlobalExceptionMiddleware
+public class GlobalExceptionMiddleware(
+    RequestDelegate next,
+    ILogger<GlobalExceptionMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<GlobalExceptionMiddleware> _logger;
-
-    public GlobalExceptionMiddleware(
-        RequestDelegate next,
-        ILogger<GlobalExceptionMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception exception)
         {
             var traceId = context.TraceIdentifier;
 
-            _logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", traceId);
+            logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", traceId);
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/json";

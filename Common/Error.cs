@@ -1,3 +1,10 @@
 namespace ExpenseApi.Common;
 
-public sealed record Error(string Code, string Message, object? Details = null);
+public sealed class Error(string code, string message, object? details = null)
+{
+    public string Code { get; } = code;
+
+    public string Message { get; } = message;
+
+    public object? Details { get; } = details;
+}
