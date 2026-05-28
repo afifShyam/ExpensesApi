@@ -1,9 +1,8 @@
-using System.Text.Json;
-using ExpenseApi.Common;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseApi.Middleware;
 
-public class GlobalExceptionMiddleware(
+public sealed class GlobalExceptionMiddleware(
     RequestDelegate next,
     ILogger<GlobalExceptionMiddleware> logger)
 {
@@ -15,24 +14,40 @@ public class GlobalExceptionMiddleware(
         }
         catch (Exception exception)
         {
-            var traceId = context.TraceIdentifier;
-
-            logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", traceId);
-
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/json";
-
-            var response = new ApiErrorResponse
-            {
-                Message = "Something went wrong.",
-                Error = new ApiError
-                {
-                    Code = "SERVER_ERROR",
-                    TraceId = traceId
-                }
-            };
-
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            await HandleExceptionAsync(context, exception);
         }
+    }
+
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        var traceId = context.TraceIdentifier;
+
+        logger.LogError(
+            exception,
+            "Unhandled exception. TraceId: {TraceId}",
+            traceId);
+
+        if (context.Response.HasStarted)
+        {
+            throw exception;
+        }
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Server error",
+            Detail = "Something went wrong.",
+            Instance = context.Request.Path
+        };
+
+        problem.Extensions["traceId"] = traceId;
+        problem.Extensions["code"] = "SERVER_ERROR";
+
+        await context.Response.WriteAsJsonAsync(
+            problem,
+            cancellationToken: context.RequestAborted);
     }
 }

@@ -8,7 +8,6 @@
     ".NETCoreApp,Version=v10.0": {
       "ExpenseApi/1.0.0": {
         "dependencies": {
-          "AspNetCoreRateLimit": "5.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.8",
           "Microsoft.AspNetCore.OpenApi": "10.0.8",
           "Microsoft.EntityFrameworkCore": "10.0.8",
@@ -17,17 +16,6 @@
         },
         "runtime": {
           "ExpenseApi.dll": {}
-        }
-      },
-      "AspNetCoreRateLimit/5.0.0": {
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
-        },
-        "runtime": {
-          "lib/net6.0/AspNetCoreRateLimit.dll": {
-            "assemblyVersion": "4.0.2.0",
-            "fileVersion": "4.0.2.0"
-          }
         }
       },
       "Humanizer.Core/2.14.1": {
@@ -604,13 +592,6 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
-    },
-    "AspNetCoreRateLimit/5.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-6fq9+o1maGADUmpK/PvcF0DtXW2+7bSkIL7MDIo/agbIHKN8XkMQF4oze60DO731WaQmHmK260hB30FwPzCmEg==",
-      "path": "aspnetcoreratelimit/5.0.0",
-      "hashPath": "aspnetcoreratelimit.5.0.0.nupkg.sha512"
     },
     "Humanizer.Core/2.14.1": {
       "type": "package",

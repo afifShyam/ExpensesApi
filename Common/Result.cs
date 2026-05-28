@@ -41,4 +41,5 @@ public sealed class Result<T>
             ? success(Value!)
             : failure(Error!);
     }
+
 }

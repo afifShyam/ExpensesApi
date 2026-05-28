@@ -1,6 +1,5 @@
-using ExpenseApi.Common;
-using ExpenseApi.DTOs;
-using ExpenseApi.Services;
+using ExpenseApi.Application.DTOs.Expenses;
+using ExpenseApi.Application.Services.Expenses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseApi.Controllers;
@@ -15,7 +14,6 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
     public async Task<IActionResult> GetAll()
     {
         var result = await _expenseService.GetAllAsync();
-
 
         return result.When<IActionResult>(
             success: value => Success(value, "Expenses fetched successfully."),
@@ -41,11 +39,11 @@ public class ExpensesController(IExpenseService expenseService) : ApiControllerB
 
         return result.When<IActionResult>(
             success: value => CreatedSuccess(
-            nameof(GetById),
-            new { id = value!.Id },
-            value,
-            "Expense created successfully."
-        ),
+                nameof(GetById),
+                new { id = value!.Id },
+                value,
+                "Expense created successfully."
+            ),
             failure: Failure
         );
     }

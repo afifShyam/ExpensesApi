@@ -32,6 +32,11 @@ public abstract class ApiControllerBase : ControllerBase
         );
     }
 
+    protected IActionResult Deleted()
+    {
+        return NoContent();
+    }
+
     protected IActionResult Failure(Error error)
     {
         var response = new ApiErrorResponse
@@ -45,18 +50,6 @@ public abstract class ApiControllerBase : ControllerBase
             }
         };
 
-        return error.Code switch
-        {
-            "Expense.NotFound" => NotFound(response),
-            "Category.NotFound" => NotFound(response),
-
-            "Expense.InvalidAmount" => BadRequest(response),
-            "Expense.InvalidCategory" => BadRequest(response),
-            "VALIDATION_ERROR" => BadRequest(response),
-
-            "AUTH_EXPIRED" => Unauthorized(response),
-
-            _ => BadRequest(response)
-        };
+        return StatusCode(error.StatusCode, response);
     }
 }
