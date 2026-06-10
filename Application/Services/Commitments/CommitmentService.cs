@@ -2,34 +2,42 @@ using ExpenseApi.Application.DTOs.Commitment;
 using ExpenseApi.Application.Interfaces;
 using ExpenseApi.Common;
 using ExpenseApi.Domain.Entities;
+using ExpenseApi.Common.Mapping;
+using AutoMapper;
 
 namespace ExpenseApi.Application.Services.Commitments;
 
-public class CommitmentService(ICommitmentRepository commitmentRepository) : ICommitmentService
+public sealed class CommitmentService(
+    ICommitmentRepository commitmentRepository,
+    ILogger<CommitmentService> logger,
+    IMapper mapper
+) : ICommitmentService
 {
-    private readonly ICommitmentRepository _commitmentRepository = commitmentRepository;
 
     public async Task<Result<IEnumerable<CommitmentResponseDto>>> GetAllAsync()
     {
-        var commitments = await _commitmentRepository.GetAllAsync();
+        var commitments = await commitmentRepository.GetAllAsync();
 
-        var response = commitments.Select(ToResponseDto);
+        var response = commitments.Select(
+            mapper.Map<CommitmentResponseDto>
+        );
 
         return Result<IEnumerable<CommitmentResponseDto>>.Success(response);
     }
 
     public async Task<Result<CommitmentResponseDto>> GetByIdAsync(int id)
     {
-        var commitment = await _commitmentRepository.GetByIdAsync(id);
+        var commitment = await commitmentRepository.GetByIdAsync(id);
 
         if (commitment is null)
         {
+            logger.LogWarning("Commitment not found with id: {CommitmentId}", id);
             return Result<CommitmentResponseDto>.Failure(
                 Error.NotFound("Commitment.NotFound", "Commitment not found.")
             );
         }
 
-        return Result<CommitmentResponseDto>.Success(ToResponseDto(commitment));
+        return Result<CommitmentResponseDto>.Success(mapper.Map<CommitmentResponseDto>(commitment));
     }
 
     public async Task<Result<CommitmentResponseDto>> CreateAsync(CreateCommitmentDto dto)
@@ -44,6 +52,7 @@ public class CommitmentService(ICommitmentRepository commitmentRepository) : ICo
 
         if (validationError is not null)
         {
+            logger.LogWarning("Validation failed for commitment creation: {ValidationError}", validationError.Code);
             return Result<CommitmentResponseDto>.Failure(validationError);
         }
 
@@ -58,14 +67,14 @@ public class CommitmentService(ICommitmentRepository commitmentRepository) : ICo
             CreatedAt = DateTime.UtcNow,
         };
 
-        await _commitmentRepository.AddAsync(commitment);
+        await commitmentRepository.AddAsync(commitment);
 
-        return Result<CommitmentResponseDto>.Success(ToResponseDto(commitment));
+        return Result<CommitmentResponseDto>.Success(mapper.Map<CommitmentResponseDto>(commitment));
     }
 
     public async Task<Result<CommitmentResponseDto>> UpdateAsync(int id, UpdateCommitmentDto dto)
     {
-        var commitment = await _commitmentRepository.GetByIdAsync(id);
+        var commitment = await commitmentRepository.GetByIdAsync(id);
 
         if (commitment is null)
         {
@@ -94,14 +103,14 @@ public class CommitmentService(ICommitmentRepository commitmentRepository) : ICo
         commitment.EndDate = dto.EndDate;
         commitment.UpdatedAt = DateTime.UtcNow;
 
-        await _commitmentRepository.UpdateAsync(commitment);
+        await commitmentRepository.UpdateAsync(commitment);
 
-        return Result<CommitmentResponseDto>.Success(ToResponseDto(commitment));
+        return Result<CommitmentResponseDto>.Success(mapper.Map<CommitmentResponseDto>(commitment));
     }
 
     public async Task<Result<bool>> DeleteAsync(int id)
     {
-        var commitment = await _commitmentRepository.GetByIdAsync(id);
+        var commitment = await commitmentRepository.GetByIdAsync(id);
 
         if (commitment is null)
         {
@@ -110,14 +119,14 @@ public class CommitmentService(ICommitmentRepository commitmentRepository) : ICo
             );
         }
 
-        await _commitmentRepository.DeleteAsync(commitment);
+        await commitmentRepository.DeleteAsync(commitment);
 
         return Result<bool>.Success(true);
     }
 
     public async Task<Result<bool>> DeleteAllAsync()
     {
-        var bulkDelete = await _commitmentRepository.BulkDeleteAsync();
+        var bulkDelete = await commitmentRepository.BulkDeleteAsync();
 
         return Result<bool>.Success(bulkDelete);
     }
@@ -128,37 +137,14 @@ public class CommitmentService(ICommitmentRepository commitmentRepository) : ICo
         int dueDay,
         DateTime? endDate)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        return (name, amount, dueDay, endDate) switch
         {
-            return Error.Validation("Commitment.InvalidName", "Name is required.");
-        }
-
-        if (amount <= 0)
-        {
-            return Error.Validation("Commitment.InvalidAmount", "Amount must be greater than zero.");
-        }
-
-        if (dueDay < 1 || dueDay > 31)
-        {
-            return Error.Validation("Commitment.InvalidDueDay", "Due day must be between 1 and 31.");
-        }
-
-
-
-        return null;
-    }
-
-    private static CommitmentResponseDto ToResponseDto(Commitment commitment)
-    {
-        return new CommitmentResponseDto
-        {
-            Id = commitment.Id,
-            Name = commitment.Name,
-            Amount = commitment.Amount,
-            DueDay = commitment.DueDay,
-            IsActive = commitment.IsActive,
-            StartDate = commitment.StartDate,
-            EndDate = commitment.EndDate
+            (_, _, _, _) when string.IsNullOrWhiteSpace(name) => Error.Validation("Commitment.InvalidName", "Name is required."),
+            (_, _, _, _) when amount <= 0 => Error.Validation("Commitment.InvalidAmount", "Amount must be greater than zero."),
+            (_, _, _, _) when dueDay < 1 || dueDay > 31 => Error.Validation("Commitment.InvalidDueDay", "Due day must be between 1 and 31."),
+            _ => null
         };
+
     }
+
 }

@@ -12,5 +12,5 @@ public class Category
 
     public DateTime? UpdatedAt { get; set; }
 
-    public List<Expense> Expenses { get; set; } = new();
+    public List<Expense> Expenses { get; set; } = [];
 }
